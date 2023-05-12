@@ -20,7 +20,7 @@
     "test": "mocha -r ts-node/register -b -t 100000 ./tests/proto.test.ts",
     "loop": "node -r ts-node/register ./src/index.ts",
     "conv": "mocha -r ts-node/register -b -t 100000 ./tests/conversions.test.ts",
-    "executor": "node -r ts-node/register ./src/index.ts"
+    "start": "node -r ts-node/register ./src/index.ts"
   },
   "devDependencies": {
     "@types/node": "18.11.9",
