@@ -62,32 +62,34 @@ const pmmClient = new PMMClient({
 });
 
 async function start() {
+  // supply(address asset,uint256 amount,address onBehalfOf,uint16 referralCode)
+  const receiver = "0x794a61358d6845594f94dc1db02a252b5b4814ad"; //Aave: Pool V3
+
   const callData =
     "0x617ba0370000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa8417400000000000000000000000000000000000000000000000000000000000f4240000000000000000000000000b779daead6031ef189cad4ac438c991efe7635a70000000000000000000000000000000000000000000000000000000000000000";
   const executionFee = 0;
-  const safeTxGas = 1_000;
-  const giveChainId = ChainId.Polygon;
-  const takeChainId = ChainId.BSC;
+  const safeTxGas = 1_000_000;
+  const giveChainId = ChainId.BSC;
+  const takeChainId = ChainId.Polygon;
   const order: OrderData = {
-    nonce: 1n,
     maker: tokenStringToBuffer(giveChainId, address),
     give: {
       tokenAddress: tokenStringToBuffer(
         giveChainId,
-        "0x0000000000000000000000000000000000000000"
+        "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", // USDC in the bnb chain
       ),
       chainId: giveChainId,
-      amount: 10000000000000000n,
+      amount: 1100000000000000000n, //1.1 USDC
     },
     take: {
       tokenAddress: tokenStringToBuffer(
         takeChainId,
-        "0x0000000000000000000000000000000000000000"
+        "0x2791bca1f2de4661ed88a30c99a7a9449aa84174", // USDC in the polygon
       ),
       chainId: takeChainId,
-      amount: 10000000000000n,
+      amount: 1_000_000n, //1 USDC
     },
-    receiver: tokenStringToBuffer(takeChainId, address),
+    receiver: tokenStringToBuffer(takeChainId, receiver),
     givePatchAuthority: tokenStringToBuffer(giveChainId, address),
     orderAuthorityDstAddress: tokenStringToBuffer(takeChainId, address),
     externalCall: packExternalCall(
@@ -96,7 +98,7 @@ async function start() {
       safeTxGas,
       "0x0000000000000000000000000000000000000000",
       false,
-      false,
+      true,
       callData
     ),
     allowedTaker: undefined,
