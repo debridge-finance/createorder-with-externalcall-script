@@ -61,60 +61,44 @@ const pmmClient = new PMMClient({
   [ChainId.Avalanche]: evmClient,
 });
 
-async function start() {
+
+/* 
+* This function create order 0.2 USDC from BNB chain to 0.1 USDC in Polygon and supply assets to the Aave protocol.
+*/
+async function supplyToAave() {
+  
   // supply(address asset,uint256 amount,address onBehalfOf,uint16 referralCode)
   const receiver = "0x794a61358d6845594f94dc1db02a252b5b4814ad"; // Aave: Pool V3
-
+  // const executorAddress = "0xAD8917fD27ce6bb79Eda5FE8331955a52ae5dA63"; // It's custom AAVECallExecutor
+  // const callData = walletAddress; // if used AAVECallExecutor
+  const executorAddress = "0x0000000000000000000000000000000000000000";
   const executionFee = 0;
   const safeTxGas = 1_000_000;
   const giveChainId = ChainId.BSC;
   const takeChainId = ChainId.Polygon;
 
   const giveWeb3 = web3Map[giveChainId];
-  const address = giveWeb3.eth.defaultAccount!;
+  const walletAddress = giveWeb3.eth.defaultAccount!;
   const aaveContractService = new AaveContractService(giveWeb3);
   const provider = new EvmProviderAdapter(giveWeb3);
 
   const takeTokenAddress = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174"; // USDC in the polygon
-  const takeTokenAmount = 1_000_000n;
+  const takeTokenAmount = 100_000n;
 
-  const giveTokenAmount = 1100000000000000000n; // 1.1 USDC
-  const referralCode = 0;
+  const giveTokenAmount = 200000000000000000n; // 0.2 USDC
+
+  // Create callData to supply in the Aave protocol
   const callData = aaveContractService.supply(
     takeTokenAddress,
     takeTokenAmount.toString(),
-    address,
-    referralCode
+    walletAddress,
+    0, //referralCode
   );
+  
   const giveTokenAddress = "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"; // USDC in the bnb chain
 
-  const order: OrderData = {
-    maker: tokenStringToBuffer(giveChainId, address),
-    give: {
-      tokenAddress: tokenStringToBuffer(giveChainId, giveTokenAddress),
-      chainId: giveChainId,
-      amount: giveTokenAmount,
-    },
-    take: {
-      tokenAddress: tokenStringToBuffer(takeChainId, takeTokenAddress),
-      chainId: takeChainId,
-      amount: takeTokenAmount,
-    },
-    receiver: tokenStringToBuffer(takeChainId, receiver),
-    givePatchAuthority: tokenStringToBuffer(giveChainId, address),
-    orderAuthorityDstAddress: tokenStringToBuffer(takeChainId, address),
-    externalCall: packExternalCall(
-      executionFee,
-      address,
-      safeTxGas,
-      "0x0000000000000000000000000000000000000000",
-      false,
-      true,
-      callData
-    ),
-    allowedTaker: undefined,
-    allowedCancelBeneficiary: undefined,
-  } as unknown as OrderData;
+  const order: OrderData = createOrderData(walletAddress, giveChainId, giveTokenAddress, giveTokenAmount, takeChainId,
+    takeTokenAddress, takeTokenAmount, receiver, executionFee, callData, safeTxGas, executorAddress);
 
   const res = await pmmClient.createOrder(order, 0, undefined, {
     permit: "0x",
@@ -126,4 +110,48 @@ async function start() {
   await provider.sendTransaction(res);
 }
 
-start();
+
+function createOrderData(
+  walletAddress: string,
+  giveChainId: ChainId,
+  giveTokenAddress: string,
+  giveTokenAmount: bigint,
+  takeChainId: ChainId,
+  takeTokenAddress: string,
+  takeTokenAmount: bigint,
+  receiver: string,
+  executionFee: number,
+  callData: string,
+  safeTxGas: number = 0,
+  executor: string = "0x0000000000000000000000000000000000000000"): OrderData {
+  return {
+    maker: tokenStringToBuffer(giveChainId, walletAddress),
+    give: {
+      tokenAddress: tokenStringToBuffer(giveChainId, giveTokenAddress),
+      chainId: giveChainId,
+      amount: giveTokenAmount,
+    },
+    take: {
+      tokenAddress: tokenStringToBuffer(takeChainId, takeTokenAddress),
+      chainId: takeChainId,
+      amount: takeTokenAmount,
+    },
+    receiver: tokenStringToBuffer(takeChainId, receiver),
+    givePatchAuthority: tokenStringToBuffer(giveChainId, walletAddress),
+    orderAuthorityDstAddress: tokenStringToBuffer(takeChainId, walletAddress),
+    externalCall: packExternalCall(
+      executionFee,
+      walletAddress,
+      safeTxGas,
+      executor,
+      false, //allowDelayedExecution,
+      true,  //requireSuccessfullExecution,
+      callData
+    ),
+    allowedTaker: undefined,
+    allowedCancelBeneficiary: undefined,
+  } as unknown as OrderData;
+}
+
+
+supplyToAave();
