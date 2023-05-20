@@ -11,6 +11,8 @@ import Web3 from "web3";
 import { AaveContractService } from "./aave-contract.service";
 import { EvmProviderAdapter } from "./evm.provider.adapter";
 import { packExternalCall } from "./packExternalCall";
+import axios from 'axios';
+const widoAPI = new URL("https://api.joinwido.com/quote_v2");
 
 config();
 
@@ -63,15 +65,12 @@ const pmmClient = new PMMClient({
 
 
 /* 
-* This function create order 0.2 USDC from BNB chain to 0.1 USDC in Polygon and supply assets to the Aave protocol.
+* This function create order 0.2 USDC from BNB chain to 0.1 USDC in Polygon and swap to USDT through Wido router
 */
-async function supplyToAave() {
-  
-  // supply(address asset,uint256 amount,address onBehalfOf,uint16 referralCode)
-  const receiver = "0x794a61358d6845594f94dc1db02a252b5b4814ad"; // Aave: Pool V3
-  // const executorAddress = "0xAD8917fD27ce6bb79Eda5FE8331955a52ae5dA63"; // It's custom AAVECallExecutor
-  // const callData = walletAddress; // if used AAVECallExecutor
-  const executorAddress = "0x0000000000000000000000000000000000000000";
+async function swapWido() {
+
+  const receiver = "0x919dF3aDbF5cfC9fcfd43198EDFe5aA5561CB456"; // WIDO
+  const executorAddress = "0x5065dB65612C1064D52d6528d4E03c9A12032629"; //WidoCallExecutor
   const executionFee = 0;
   const safeTxGas = 0;
   const giveChainId = ChainId.BSC;
@@ -79,7 +78,7 @@ async function supplyToAave() {
 
   const giveWeb3 = web3Map[giveChainId];
   const walletAddress = giveWeb3.eth.defaultAccount!;
-  const aaveContractService = new AaveContractService(giveWeb3);
+
   const provider = new EvmProviderAdapter(giveWeb3);
 
   const giveTokenAddress = "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"; // USDC in the bnb chain
@@ -89,14 +88,22 @@ async function supplyToAave() {
   const takeTokenAmount = 100_000n; // 0.1 USDC
 
 
-  // Create callData to supply in the Aave protocol
-  const callData = aaveContractService.supply(
-    takeTokenAddress,
-    takeTokenAmount.toString(),
-    walletAddress,
-    0, //referralCode
-  );
-  
+  // Create callData to swap through WIDO router
+  let params: QuoteParams = {
+    "from_chain_id": takeChainId,
+    "from_token": takeTokenAddress,
+    "to_chain_id": takeChainId,
+    "to_token": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f", // polygon USDT
+    "slippage_percentage": 0.03,
+    "amount": takeTokenAmount.toString(),
+    "user": executorAddress,
+    "partner": walletAddress,
+    "recipient": walletAddress
+  };
+
+  const quoteURL = setQueryStringParameters(widoAPI, params);
+  const widoResponse = await fetchData(quoteURL);
+  const callData = widoResponse.data;  
 
   const order: OrderData = createOrderData(walletAddress, giveChainId, giveTokenAddress, giveTokenAmount, takeChainId,
     takeTokenAddress, takeTokenAmount, receiver, executionFee, callData, safeTxGas, executorAddress);
@@ -107,6 +114,7 @@ async function supplyToAave() {
   });
 
   console.log(res);
+
   await provider.sendTransaction(res);
 }
 
@@ -154,4 +162,36 @@ function createOrderData(
 }
 
 
-supplyToAave();
+interface QuoteParams {
+  from_chain_id: number;
+  from_token: string;
+  to_chain_id: number;
+  to_token: string;
+  slippage_percentage: number;
+  amount: string;
+  user: string;
+  partner: string;
+  recipient: string;
+}
+
+function setQueryStringParameters(url: URL, params: QuoteParams): URL {
+  Object.keys(params).forEach(key => url.searchParams.append(key, params[key as keyof QuoteParams].toString()));
+  return url;
+}
+
+
+async function fetchData(url: URL): Promise<any> {
+  try {
+    const response = await axios.get(url.toString(), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+}
+
+swapWido();

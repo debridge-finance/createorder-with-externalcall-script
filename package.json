@@ -1,32 +1,21 @@
 {
-  "name": "@debridge-finance/dln-executor",
-  "description": "DLN executor is the rule-based daemon service developed to automatically execute orders placed on the deSwap Liquidity Network (DLN) across supported blockchains",
-  "version": "1.0.0-rc.1",
+  "name": "@debridge-finance/createorder-with-externalcall-script",
+  "description": "",
+  "version": "0.0.0",
   "author": "deBridge",
   "license": "GPL-3.0-only",
   "homepage": "https://debridge.finance",
-  "repository": "github:debridge-finance/dln-executor",
-  "keywords": [
-    "deBridge",
-    "DLN",
-    "sdk",
-    "solana",
-    "ethereum"
-  ],
+  "repository": "github:debridge-finance/createorder-with-externalcall-script",
+  "keywords": [],
   "main": "dist/cjs/index.js",
   "scripts": {
-    "lint:fix": "prettier --write 'src/**/*.{js,ts}' 'tests/**/*.{js,ts}' sample.config.ts && tslint --fix --config tslint.json --project tsconfig.json",
-    "lint": "tslint --config tslint.json --project tsconfig.json",
-    "test": "mocha -r ts-node/register -b -t 100000 ./tests/proto.test.ts",
-    "loop": "node -r ts-node/register ./src/index.ts",
-    "conv": "mocha -r ts-node/register -b -t 100000 ./tests/conversions.test.ts",
-    "start": "node -r ts-node/register ./src/index.ts"
+    "start": "node -r ts-node/register ./src/index.ts",
+    "wido": "node -r ts-node/register ./src/wido.ts"
   },
   "devDependencies": {
     "@types/node": "18.16.10",
     "eslint": "8.40.0",
     "eslint-config-prettier": "8.8.0",
-    "mocha": "10.2.0",
     "prettier": "2.8.8",
     "rimraf": "4.4.1",
     "tslib": "2.5.0",
@@ -36,16 +25,12 @@
   },
   "dependencies": {
     "@debridge-finance/dln-client": "5.0.2",
-    "@debridge-finance/solana-utils": "2.4.0",
     "@protobuf-ts/plugin": "2.9.0",
-    "@solana/web3.js": "1.76.0",
+    "axios": "^1.4.0",
     "bignumber.js": "9.1.0",
     "bs58": "5.0.0",
     "dotenv": "16.0.3",
     "ethers": "5.7.2",
-    "pino": "8.7.0",
-    "pino-pretty": "9.1.1",
-    "pino-sentry": "0.13.0",
     "ts-node": "10.9.1",
     "web3": "1.8.0"
   }
