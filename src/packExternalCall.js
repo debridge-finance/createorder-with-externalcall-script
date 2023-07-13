@@ -2,61 +2,73 @@ const ethers = require('ethers');
 const packExternalCall = (
     executionFee,
     fallbackAddress,
-    safeTxGas,
-    executor,
+    executorAddress,
     allowDelayedExecution,
     requireSuccessfullExecution,
-    callData
+    payload
 ) => {
-    // envelope version uint8, bytes envelope
+    
+    // chainEngine uint8, envelope version uint8, bytes envelope
     const dataEnvelope =
-        "0x01" +
+        "0x0101" +
         ethers.utils.defaultAbiCoder
             .encode(
                 [
                     {
                         type: "tuple",
-                        name: "DataEnvelopV1",
+                        name: "ExternalCallEnvelopV1",
                         components: [
-                            { name: "safeTxGas", type: "uint32" },
+                            { name: "fallbackAddress", type: "address" },
+                            { name: "executorAddress", type: "address" },
+                            { name: "executionFee", type: "uint160" },
                             { name: "allowDelayedExecution", type: "bool" },
                             { name: "requireSuccessfullExecution", type: "bool" },
-                            { name: "executor", type: "address" },
+                            { name: "payload", type: "bytes" },
+                        ],
+                    },
+                ],
+                [
+                    {
+                        fallbackAddress,
+                        executorAddress,
+                        executionFee,
+                        allowDelayedExecution,
+                        requireSuccessfullExecution,
+                        payload,
+                    },
+                ]
+            ).replace("0x", "");
+    return dataEnvelope;
+};
+
+const packPayload = (
+    to,
+    txGas,
+    callData
+) => {
+    const payload =
+        ethers.utils.defaultAbiCoder
+            .encode(
+                [
+                    {
+                        type: "tuple",
+                        name: "ExternalCallPayload",
+                        components: [
+                            { name: "to", type: "address" },
+                            { name: "txGas", type: "uint32" },
                             { name: "callData", type: "bytes" },
                         ],
                     },
                 ],
                 [
                     {
-                        safeTxGas,
-                        allowDelayedExecution,
-                        requireSuccessfullExecution,
-                        executor,
-                        callData,
+                        to,
+                        txGas,
+                        callData
                     },
                 ]
             )
-            .replace("0x", "");
-
-    // const dataEnvelope = "0x11223344";
-    // console.log("dataEnvelope", dataEnvelope);
-
-    const params = { executionFee, fallbackAddress, dataEnvelope };
-    const packed = ethers.utils.defaultAbiCoder.encode(
-        [
-            {
-                type: "tuple",
-                name: "ExternalCall",
-                components: [
-                    { name: "executionFee", type: "uint256" },
-                    { name: "fallbackAddress", type: "bytes" },
-                    { name: "dataEnvelope", type: "bytes" },
-                ],
-            },
-        ],
-        [params]
-    );
-    return packed;
+    return payload;
 };
-
 exports.packExternalCall = packExternalCall;
+exports.packPayload = packPayload;

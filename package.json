@@ -10,6 +10,7 @@
   "main": "dist/cjs/index.js",
   "scripts": {
     "start": "node -r ts-node/register ./src/index.ts",
+    "aave": "node -r ts-node/register ./src/aave.ts",
     "wido": "node -r ts-node/register ./src/wido.ts"
   },
   "devDependencies": {
