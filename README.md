@@ -1,7 +1,8 @@
 # createorder-with-externalcall-script
 
 ### About the Script
-This script is designed to create a cross-chain order with external contract calls post-execution.
+This script is designed to create a cross-chain order with external contract calls post-execution. 
+<b>Please note that this is our test environment.</b>
 
 ### Setup
 To get started, please ensure to set your private key in the .env file.
