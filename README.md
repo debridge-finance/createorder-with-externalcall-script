@@ -7,7 +7,7 @@ This script is designed to create a cross-chain order with external contract cal
 To get started, please ensure to set your private key in the .env file.
 
 ### Asset Approval
-You are required to approve USDC (give token) for the contract address pmmSourceAddress 0x3c7010F5a2eCC2B56BeAE085B6528e492c8b36B6.
+You are required to approve USDC (give token) for the contract address pmmSourceAddress 0x3c7010F5a2eCC2B56BeAE085B6528e492c8b36B6. Please note, as this is our testing environment, we recommend approving only a nominal amount for safety.
 
 ### Example 1
 The example shows the creation of an order:
