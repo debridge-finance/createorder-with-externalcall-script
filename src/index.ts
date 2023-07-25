@@ -62,7 +62,7 @@ async function supplyToAave() {
   });
 
   console.log(res);
-  // await provider.sendTransaction(res);
+  await provider.sendTransaction(res);
 }
 
 supplyToAave();
